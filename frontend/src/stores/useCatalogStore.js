@@ -6,7 +6,7 @@ import {
   creditAccountApi,
 } from '../services/api';
 
-const useCatalogStore = create((set, get) => ({
+export const useCatalogStore = create((set, get) => ({
   categories: [],
   products: [],
   customers: [],
@@ -138,12 +138,13 @@ const useCatalogStore = create((set, get) => ({
     }));
     return updated;
   },
-  deleteCreditAccount: async (id) => {
+    deleteCreditAccount: async (id) => {
     await creditAccountApi.delete(id);
     set((s) => ({ creditAccounts: s.creditAccounts.filter((c) => c.id !== id) }));
   },
 }));
 
-// === EXPORTACIÓN POR DEFECTO CORREGIDA ===
+// === AMBAS EXPORTACIONES PARA QUE NUNCA FALLE ===
 export default useCatalogStore;
+// ===============================================
 // ========================================
