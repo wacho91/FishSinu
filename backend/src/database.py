@@ -2,7 +2,6 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
@@ -16,7 +15,8 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 # Línea de debug para ver qué URL está usando
 print(f"DEBUG DATABASE: Conectando a -> {DATABASE_URL}")
 
-async_engine = create_async_engine(
+# Creamos el motor y lo llamamos 'engine' para que main.py lo encuentre
+engine = create_async_engine(
     DATABASE_URL,
     echo=False,
     pool_pre_ping=True,
@@ -24,7 +24,7 @@ async_engine = create_async_engine(
 )
 
 AsyncSessionLocal = async_sessionmaker(
-    async_engine,
+    engine,
     class_=AsyncSession,
     expire_on_commit=False,
 )
