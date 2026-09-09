@@ -494,8 +494,6 @@ class InventoryMovement(CreatedAtMixin, Base):
     stock_after: Mapped[Decimal] = mapped_column(
         Numeric(12, 4),
         nullable=False,
-        insertable=False,
-        updatable=False,
     )
     reason: Mapped[str | None] = mapped_column(Text)
     created_by: Mapped[UUID | None] = mapped_column(
