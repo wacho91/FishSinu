@@ -19,8 +19,9 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from database import get_db
-from models import (
+# === IMPORTACIONES CORREGIDAS CON PUNTITO ===
+from .database import get_db
+from .models import (
     CompanySetting,
     CreditAccount,
     Customer,
@@ -33,7 +34,7 @@ from models import (
     Sale,
     SaleItem,
 )
-from schemas import (
+from .schemas import (
     CompanySettingRead,
     CompanySettingUpdate,
     CreditAccountCreate,
@@ -62,6 +63,7 @@ from schemas import (
     SaleRead,
     SaleSummary,
 )
+# ============================================
 
 router = APIRouter(prefix="/api/v1")
 
