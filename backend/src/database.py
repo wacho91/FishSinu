@@ -1,65 +1,36 @@
-# backend/src/database.py
-"""
-FishSinu - Configuración de base de datos asíncrona.
-
-Capa: Infrastructure
-
-Usa SQLAlchemy 2.x en modo asíncrono con asyncpg para PostgreSQL/Supabase.
-El backend se conecta con un rol que tiene bypass RLS (service_role/postgres).
-"""
-
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
+from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
 )
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import declarative_base
 
-try:  # Carga opcional de variables de entorno desde .env
-    from dotenv import load_dotenv
+# Lee la URL desde el archivo .env
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-    load_dotenv()
-except ImportError:
-    pass
+# Línea de debug para ver qué URL está usando
+print(f"DEBUG DATABASE: Conectando a -> {DATABASE_URL}")
 
-
-DATABASE_URL = os.getenv(
-    "FISHSINU_DATABASE_URL",
-    "postgresql+asyncpg://postgres:postgres@localhost:5432/fishsinu",
-)
-
-engine = create_async_engine(
+async_engine = create_async_engine(
     DATABASE_URL,
-    echo=os.getenv("FISHSINU_SQL_ECHO", "false").lower() == "true",
+    echo=False,
     pool_pre_ping=True,
+    connect_args={"statement_cache_size": 0} # Magia para PgBouncer de Supabase
 )
 
 AsyncSessionLocal = async_sessionmaker(
-    bind=engine,
+    async_engine,
     class_=AsyncSession,
     expire_on_commit=False,
-    autoflush=False,
 )
 
+Base = declarative_base()
 
-class Base(DeclarativeBase):
-    """Base declarativa compartida por todos los modelos ORM."""
-    pass
-
-
-async def get_db() -> AsyncSession:
-    """
-    Dependencia de FastAPI que provee una sesión asíncrona.
-
-    Uso:
-        async def endpoint(db: AsyncSession = Depends(get_db)):
-            ...
-    """
-    async with AsyncSessionLocal() as session:
-        try:
-            yield session
-        except Exception:
-            await session.rollback()
-            raise
+async def get_db():
+    async with AsyncSessionLocal() as db:
+        yield db
