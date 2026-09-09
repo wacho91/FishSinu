@@ -6,7 +6,7 @@ import {
   creditAccountApi,
 } from '../services/api';
 
-export const useCatalogStore = create((set, get) => ({
+const useCatalogStore = create((set, get) => ({
   categories: [],
   products: [],
   customers: [],
@@ -143,3 +143,7 @@ export const useCatalogStore = create((set, get) => ({
     set((s) => ({ creditAccounts: s.creditAccounts.filter((c) => c.id !== id) }));
   },
 }));
+
+// === EXPORTACIÓN POR DEFECTO CORREGIDA ===
+export default useCatalogStore;
+// ========================================
