@@ -84,8 +84,8 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=_load_cors_origins(),
-    allow_credentials=True,
+    allow_origins=["*"],  # Permite a cualquier dominio (incluido tu localhost) conectarse
+    allow_credentials=False,  # ¡MUY IMPORTANTE! Debe estar en False si usamos "*"
     allow_methods=["*"],
     allow_headers=["*"],
 )
