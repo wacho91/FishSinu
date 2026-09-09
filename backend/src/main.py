@@ -64,13 +64,10 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     try:
         async with engine.connect() as conn:
             await conn.execute(text("SELECT 1"))
-        logger.info("FishSinu API conectado correctamente a la base de datos.")
-    except Exception:
-        logger.warning(
-            "No se pudo verificar la base de datos en el arranque. "
-            "Los endpoints que la usen fallarán hasta que esté disponible.",
-            exc_info=True,
-        )
+        logger.info("✅ FishSinu API conectado correctamente a la base de datos.")
+    except Exception as e:
+        # Mensaje limpio sin el traceback gigante
+        logger.warning(f"⚠️ No se pudo verificar la base de datos en el arranque: {e}")
 
     yield
 
