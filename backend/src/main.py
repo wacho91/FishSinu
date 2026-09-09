@@ -19,7 +19,7 @@ from sqlalchemy import text
 from .database import Base, engine
 
 # Importar modelos para que queden registrados en Base.metadata
-from models import (  # noqa: F401
+from .models import (  # noqa: F401
     CompanySetting,
     CreditAccount,
     Customer,
@@ -32,7 +32,7 @@ from models import (  # noqa: F401
     Sale,
     SaleItem,
 )
-from routes import router
+from .routes import router
 
 logger = logging.getLogger("uvicorn.error")
 
