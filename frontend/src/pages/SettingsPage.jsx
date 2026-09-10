@@ -9,15 +9,15 @@ import { companyApi, profileApi } from '../services/api';
 export default function SettingsPage() {
   const { company, fetchCompany, profiles, fetchProfiles } = useSessionStore();
 
-  // Company settings
+  // Company settings - Por defecto COP
   const [form, setForm] = useState({
     business_name: '',
     tax_id: '',
     address: '',
     email: '',
     phone: '',
-    currency: 'PEN',
-    invoice_prefix: 'F001',
+    currency: 'COP',
+    invoice_prefix: 'FS',
     logo_url: '',
   });
   const [savingCompany, setSavingCompany] = useState(false);
@@ -43,8 +43,8 @@ export default function SettingsPage() {
         address: company.address || '',
         email: company.email || '',
         phone: company.phone || '',
-        currency: company.currency || 'PEN',
-        invoice_prefix: company.invoice_prefix || 'F001',
+        currency: company.currency || 'COP',
+        invoice_prefix: company.invoice_prefix || 'FS',
         logo_url: company.logo_url || '',
       });
     }
@@ -117,7 +117,7 @@ export default function SettingsPage() {
             required
           />
           <Input
-            label="RUC / Tax ID"
+            label="NIT" // Cambiado a NIT
             value={form.tax_id}
             onChange={(e) => setForm({ ...form, tax_id: e.target.value })}
             required
@@ -146,7 +146,7 @@ export default function SettingsPage() {
               value={form.currency}
               onChange={(e) => setForm({ ...form, currency: e.target.value })}
             >
-              <option value="PEN">PEN — Sol</option>
+              <option value="COP">COP — Peso Colombiano</option>
               <option value="USD">USD — Dólar</option>
             </Select>
             <Input
