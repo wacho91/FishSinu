@@ -35,10 +35,10 @@ export default function LoginPage() {
   return (
     <div className="relative min-h-screen flex items-center justify-center px-4 py-12 overflow-hidden">
       
-      {/* === FONDO DE PESCADERÍA DIFUMINADO === */}
+      {/* === FONDO DE PESCADERÍA DIFUMINADO (NUEVA IMAGEN) === */}
       <div 
         className="absolute inset-0 z-0 bg-cover bg-center" 
-        style={{ backgroundImage: "url('https://images.unsplash.com/photo-1574781330855-d0db8cc6a79c?q=80&w=1974&auto=format&fit=crop')" }}
+        style={{ backgroundImage: "url('https://images.unsplash.com/photo-1535399831218-d4dbf7778c5c?q=80&w=2070&auto=format&fit=crop')" }}
       ></div>
       
       {/* Capa oscura difuminada para dar contraste */}
@@ -50,7 +50,6 @@ export default function LoginPage() {
           FishSinu
         </h1>
       </div>
-      {/* ========================================== */}
 
       {/* Tarjeta de Login translúcida (Glassmorphism) */}
       <div className="relative z-10 max-w-md w-full bg-white/10 dark:bg-gray-800/30 backdrop-blur-xl p-8 rounded-2xl shadow-2xl border border-white/20">
