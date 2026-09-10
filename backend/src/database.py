@@ -1,12 +1,6 @@
 import os
 from dotenv import load_dotenv
-
-# === MAGIA PARA ENCONTRAR EL .ENV ===
-# Le decimos que suba una carpeta (desde src hacia backend) y busque el .env
-base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-dotenv_path = os.path.join(base_dir, '.env')
-load_dotenv(dotenv_path=dotenv_path)
-# ====================================
+load_dotenv()
 
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
@@ -15,8 +9,10 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.orm import declarative_base
 
-# Lee la URL desde el archivo .env
-DATABASE_URL = os.getenv("DATABASE_URL")
+# === LINK DE SUPABASE PEGADO DIRECTO ===
+# ¡OJO! Cambia TU_CONTRASEÑA_REAL por la contraseña de tu proyecto FishSinu
+DATABASE_URL = "postgresql+asyncpg://postgres.xsfdufxevnddztvkqwxc:luQUEn7oz9YgjZ12@aws-0-sa-east-1.pooler.supabase.com:6543/postgres"
+# =======================================
 
 # Línea de debug para ver qué URL está usando
 print(f"DEBUG DATABASE: Conectando a -> {DATABASE_URL}")
