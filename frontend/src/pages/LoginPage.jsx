@@ -35,21 +35,25 @@ export default function LoginPage() {
   return (
     <div className="relative min-h-screen flex items-center justify-center px-4 py-12 overflow-hidden">
       
-      {/* === FONDO DE PESCADERÍA DIFUMINADO (NUEVA IMAGEN) === */}
+      {/* === FONDO DE MERCADO DE PESCADERÍA === */}
       <div 
         className="absolute inset-0 z-0 bg-cover bg-center" 
-        style={{ backgroundImage: "url('https://images.unsplash.com/photo-1535399831218-d4dbf7778c5c?q=80&w=2070&auto=format&fit=crop')" }}
+        style={{ backgroundImage: "url('https://images.unsplash.com/photo-1534482421-64566f976cfa?q=80&w=2070&auto=format&fit=crop')" }}
       ></div>
       
       {/* Capa oscura difuminada para dar contraste */}
-      <div className="absolute inset-0 z-0 bg-gradient-to-t from-slate-900 via-slate-900/70 to-slate-900/50 backdrop-blur-md"></div>
+      <div className="absolute inset-0 z-0 bg-gradient-to-t from-slate-900 via-slate-900/80 to-slate-900/50 backdrop-blur-md"></div>
       
-      {/* Marca de agua gigante con el nombre de la empresa */}
-      <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none">
-        <h1 className="text-[18vw] font-extrabold text-white/5 tracking-tighter select-none">
-          FishSinu
+      {/* Marca de agua dividida (FISH y SINU) */}
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+        <h1 className="absolute top-10 left-5 text-[12vw] font-extrabold text-white/5 tracking-tighter select-none">
+          FISH
+        </h1>
+        <h1 className="absolute bottom-10 right-5 text-[12vw] font-extrabold text-white/5 tracking-tighter select-none">
+          SINU
         </h1>
       </div>
+      {/* ========================================== */}
 
       {/* Tarjeta de Login translúcida (Glassmorphism) */}
       <div className="relative z-10 max-w-md w-full bg-white/10 dark:bg-gray-800/30 backdrop-blur-xl p-8 rounded-2xl shadow-2xl border border-white/20">
