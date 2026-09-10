@@ -24,7 +24,10 @@ export default function DashboardPage() {
   const { products, customers, fetchProducts, fetchCustomers } = useCatalogStore();
   const { invoices, fetchInvoices } = useInvoiceStore();
   const company = useSessionStore((s) => s.company);
-  const currency = company?.currency || 'PEN';
+  
+  // === CAMBIO AQUÍ: 'PEN' cambiado a 'COP' ===
+  const currency = company?.currency || 'COP';
+  // ==========================================
 
   useEffect(() => {
     fetchSales().catch(() => {});
