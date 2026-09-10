@@ -11,7 +11,7 @@ from sqlalchemy.orm import declarative_base
 
 # === LINK DE SUPABASE PEGADO DIRECTO ===
 # ¡OJO! Cambia TU_CONTRASEÑA_REAL por la contraseña de tu proyecto FishSinu
-DATABASE_URL = "postgresql+asyncpg://postgres.xsfdufxevnddztvkqwxc:luQUEn7oz9YgjZ12@aws-0-sa-east-1.pooler.supabase.com:6543/postgres"
+DATABASE_URL = "postgresql+asyncpg://postgres.xsfdufxevnddztvkqwxc:WInwX49kLPCrYS1@aws-0-sa-east-1.pooler.supabase.com:6543/postgres"
 # =======================================
 
 # Línea de debug para ver qué URL está usando
