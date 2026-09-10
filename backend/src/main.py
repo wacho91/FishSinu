@@ -30,8 +30,14 @@ logger = logging.getLogger("uvicorn.error")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    # Startup: Verificamos la conexión a la base de datos
+    # Startup: Crear tablas y verificar la conexión a la base de datos
     try:
+        # === CREAR TODAS LAS TABLAS AUTOMÁTICAMENTE ===
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("✅ Tablas creadas/verificadas en Supabase.")
+        
+        # Verificar conexión
         async with engine.connect() as conn:
             await conn.execute(text("SELECT 1"))
         logger.info("✅ FishSinu API conectado correctamente a la base de datos.")
