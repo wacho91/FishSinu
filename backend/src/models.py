@@ -118,7 +118,7 @@ class Profile(TimestampMixin, Base):
         ),
     )
 
-    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True)  # auth.users.id
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True)
     full_name: Mapped[str] = mapped_column(Text, nullable=False)
     role: Mapped[str] = mapped_column(
         Text,
@@ -352,10 +352,7 @@ class Sale(TimestampMixin, Base):
     customer_id: Mapped[int | None] = mapped_column(
         ForeignKey("customers.id", ondelete="RESTRICT")
     )
-    cashier_id: Mapped[UUID] = mapped_column(
-        ForeignKey("auth.users.id", ondelete="RESTRICT"),
-        nullable=False,
-    )
+    cashier_id: Mapped[UUID] = mapped_column(Uuid, nullable=False)
     payment_type: Mapped[str] = mapped_column(Text, nullable=False)
     credit_account_id: Mapped[int | None] = mapped_column(
         ForeignKey("credit_accounts.id", ondelete="RESTRICT")
@@ -375,9 +372,7 @@ class Sale(TimestampMixin, Base):
     )
     notes: Mapped[str | None] = mapped_column(Text)
     cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    cancelled_by: Mapped[UUID | None] = mapped_column(
-        ForeignKey("auth.users.id", ondelete="SET NULL")
-    )
+    cancelled_by: Mapped[UUID | None] = mapped_column(Uuid)
     cancellation_reason: Mapped[str | None] = mapped_column(Text)
 
     customer: Mapped[Customer | None] = relationship(
@@ -496,9 +491,7 @@ class InventoryMovement(CreatedAtMixin, Base):
         nullable=False,
     )
     reason: Mapped[str | None] = mapped_column(Text)
-    created_by: Mapped[UUID | None] = mapped_column(
-        ForeignKey("auth.users.id", ondelete="SET NULL")
-    )
+    created_by: Mapped[UUID | None] = mapped_column(Uuid)
 
     product: Mapped[Product] = relationship(back_populates="inventory_movements")
     sale: Mapped[Sale | None] = relationship()
@@ -537,9 +530,7 @@ class Payment(CreatedAtMixin, Base):
     )
     reference: Mapped[str | None] = mapped_column(Text)
     notes: Mapped[str | None] = mapped_column(Text)
-    registered_by: Mapped[UUID | None] = mapped_column(
-        ForeignKey("auth.users.id", ondelete="SET NULL")
-    )
+    registered_by: Mapped[UUID | None] = mapped_column(Uuid)
 
     credit_account: Mapped[CreditAccount] = relationship(
         back_populates="payments"
