@@ -678,6 +678,18 @@ async def create_inventory_movement(
             detail="Stock insuficiente para realizar el movimiento.",
         )
 
+    # === MAGIA: Actualizamos el stock y calculamos el stock_after ===
+    product.stock = product.stock + quantity
+    
+    # Si es compra (STOCK_IN), actualizamos el costo promedio
+    if payload.movement_type == "STOCK_IN" and payload.unit_cost is not None:
+        if product.stock == quantity: # Si es el primer ingreso
+            product.average_cost = Decimal(str(payload.unit_cost))
+        else: # Promedio ponderado
+            total_cost = (product.average_cost * (product.stock - quantity)) + (Decimal(str(payload.unit_cost)) * quantity)
+            product.average_cost = total_cost / product.stock
+    # =================================================================
+
     movement = InventoryMovement(
         product_id=product.id,
         sale_id=None,
@@ -688,6 +700,7 @@ async def create_inventory_movement(
             if payload.unit_cost is not None
             else product.average_cost
         ),
+        stock_after=product.stock, # <--- AQUÍ ESTÁ EL ARREGLO
         reason=payload.reason,
         created_by=payload.created_by,
     )
@@ -845,12 +858,17 @@ async def create_sale(payload: SaleCreate, db: AsyncSession = Depends(get_db)):
         )
         db.add(sale_item)
 
+        # === FIX: Actualizar stock y calcular stock_after en la venta ===
+        product.stock -= quantity
+        # =================================================================
+
         inventory_movement = InventoryMovement(
             product_id=product.id,
             sale_id=sale.id,
             movement_type="STOCK_OUT",
             quantity=-quantity,
             unit_cost=info["unit_cost"],
+            stock_after=product.stock, # <--- FIX APLICADO AQUÍ TAMBIÉN
             created_by=payload.cashier_id,
         )
         db.add(inventory_movement)
