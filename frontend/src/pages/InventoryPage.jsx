@@ -5,6 +5,15 @@ import Badge from '../components/ui/Badge';
 import { useInventoryStore } from '../stores/useInventoryStore';
 import { useCatalogStore } from '../stores/useCatalogStore';
 import StockEntryModal from '../components/inventory/StockEntryModal';
+import { formatCurrency } from '../utils/formatters'; // Importamos el formato de pesos
+
+// Función auxiliar para mostrar kilos limpios
+const formatDecimal = (value) => {
+  const n = Number(value);
+  if (isNaN(n)) return '0';
+  // Si es entero, lo muestra sin decimales. Si no, con 2 decimales.
+  return n % 1 === 0 ? n.toFixed(0) : n.toFixed(2);
+};
 
 export default function InventoryPage() {
   const { movements, fetchMovements, createMovement } = useInventoryStore();
@@ -70,7 +79,8 @@ export default function InventoryPage() {
             <tbody className="divide-y divide-slate-100">
               {movements.map((m) => (
                 <tr key={m.id}>
-                  <td className="px-4 py-3">{new Date(m.created_at).toLocaleString()}</td>
+                  {/* Fecha en formato Colombia */}
+                  <td className="px-4 py-3 whitespace-nowrap">{new Date(m.created_at).toLocaleString('es-CO')}</td>
                   <td className="px-4 py-3">
                     <Badge color={typeColor(m.movement_type)}>{m.movement_type}</Badge>
                   </td>
@@ -78,12 +88,15 @@ export default function InventoryPage() {
                     <div className="font-medium">{productName(m.product_id)}</div>
                     {m.product && <div className="text-xs text-slate-400">{m.product.code}</div>}
                   </td>
-                  <td className="px-4 py-3">
+                  {/* Cantidad limpia (sin 4 decimales si es entero) */}
+                  <td className="px-4 py-3 font-medium text-slate-700">
                     {Number(m.quantity) < 0 ? '-' : ''}
-                    {Math.abs(Number(m.quantity)).toFixed(4)}
+                    {formatDecimal(Math.abs(Number(m.quantity)))}
                   </td>
-                  <td className="px-4 py-3">{Number(m.unit_cost).toFixed(2)}</td>
-                  <td className="px-4 py-3">{Number(m.stock_after).toFixed(4)}</td>
+                  {/* Costo en formato Pesos Colombianos */}
+                  <td className="px-4 py-3 text-slate-600">{formatCurrency(m.unit_cost)}</td>
+                  {/* Stock limpio */}
+                  <td className="px-4 py-3 font-medium text-slate-700">{formatDecimal(m.stock_after)}</td>
                   <td className="px-4 py-3 text-slate-500">{m.reason || '—'}</td>
                 </tr>
               ))}
