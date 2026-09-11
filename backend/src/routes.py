@@ -700,14 +700,26 @@ async def create_inventory_movement(
             if payload.unit_cost is not None
             else product.average_cost
         ),
-        stock_after=product.stock, # <--- AQUÍ ESTÁ EL ARREGLO
+        stock_after=product.stock,
         reason=payload.reason,
         created_by=payload.created_by,
     )
     db.add(movement)
     await _commit_or_conflict(db)
-    await db.refresh(movement)
-    return movement
+    
+    # === FIX MISSINGGREENLET: Recargamos el movimiento con el producto incluido ===
+    result = await db.scalar(
+        select(InventoryMovement)
+        .options(selectinload(InventoryMovement.product))
+        .where(InventoryMovement.id == movement.id)
+    )
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Movimiento creado pero no pudo recuperarse.",
+        )
+    return result
+    # ============================================================================
 
 
 # ---------------------------------------------------------------------------
@@ -868,7 +880,7 @@ async def create_sale(payload: SaleCreate, db: AsyncSession = Depends(get_db)):
             movement_type="STOCK_OUT",
             quantity=-quantity,
             unit_cost=info["unit_cost"],
-            stock_after=product.stock, # <--- FIX APLICADO AQUÍ TAMBIÉN
+            stock_after=product.stock,
             created_by=payload.cashier_id,
         )
         db.add(inventory_movement)
