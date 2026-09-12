@@ -1,5 +1,6 @@
-import { formatCurrency } from '../../lib/formatters';
+import { formatCurrency } from '../../utils/formatters';
 
-export default function CurrencyText({ value, currency = 'PEN', className = '' }) {
-  return <span className={className}>{formatCurrency(value, currency)}</span>;
+export default function CurrencyText({ value, currency = 'COP' }) {
+  // Usamos la función que ya adaptamos a pesos colombianos (sin decimales)
+  return <span>{formatCurrency(value, currency)}</span>;
 }
