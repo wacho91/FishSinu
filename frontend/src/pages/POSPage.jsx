@@ -9,7 +9,7 @@ import { useCatalogStore } from '../stores/useCatalogStore';
 import { useSalesStore } from '../stores/useSalesStore';
 import { useSessionStore } from '../stores/useSessionStore';
 import useDebounce from '../hooks/useDebounce';
-import { formatCurrency, formatDecimal } from '../utils/formatters';
+import { formatCurrency, formatDecimal } from '../lib/formatters';
 
 export default function POSPage() {
   const navigate = useNavigate();
