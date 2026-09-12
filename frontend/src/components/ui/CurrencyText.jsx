@@ -1,4 +1,4 @@
-import { formatCurrency } from '../../utils/formatters';
+import { formatCurrency } from '../../lib/formatters';
 
 export default function CurrencyText({ value, currency = 'COP' }) {
   // Usamos la función que ya adaptamos a pesos colombianos (sin decimales)
