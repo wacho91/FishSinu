@@ -4,7 +4,13 @@ import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
 
-const DOCUMENT_TYPES = ['RUC', 'DNI', 'CI', 'PASSPORT', 'NIT', 'OTHER'];
+// === Opciones adaptadas a Colombia ===
+const DOCUMENT_TYPES = [
+  { value: 'CC', label: 'Cédula (CC)' },
+  { value: 'NIT', label: 'NIT' },
+  { value: 'PASSPORT', label: 'Pasaporte' }
+];
+// ======================================
 
 export default function CustomerFormModal({
   open,
@@ -13,7 +19,7 @@ export default function CustomerFormModal({
   onSubmit,
 }) {
   const [form, setForm] = useState({
-    document_type: initial?.document_type || 'NIT',
+    document_type: initial?.document_type || 'CC', // Por defecto CC
     tax_id: initial?.tax_id || '',
     name: initial?.name || '',
     email: initial?.email || '',
@@ -51,8 +57,8 @@ export default function CustomerFormModal({
             }
           >
             {DOCUMENT_TYPES.map((d) => (
-              <option key={d} value={d}>
-                {d}
+              <option key={d.value} value={d.value}>
+                {d.label}
               </option>
             ))}
           </Select>
