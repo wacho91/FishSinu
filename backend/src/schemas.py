@@ -20,7 +20,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 # ---------------------------------------------------------------------------
 ProfileRole = Literal["admin", "cashier", "accountant"]
 SalesUnit = Literal["KG", "LB", "UNIT"]
-DocumentType = Literal["RUC", "DNI", "CI", "PASSPORT", "NIT", "OTHER"]
+DocumentType = Literal["CC", "NIT", "PASSPORT", "OTHER"]
 CreditAccountStatus = Literal["ACTIVE", "BLOCKED", "PAID"]
 SalePaymentType = Literal["CASH", "CARD", "TRANSFER", "CREDIT", "MIXED"]
 SaleStatus = Literal["COMPLETED", "CANCELLED"]
