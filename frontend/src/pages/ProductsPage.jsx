@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import Swal from 'sweetalert2';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
@@ -46,26 +47,89 @@ export default function ProductsPage() {
       else await createProduct(payload);
       setFormOpen(false);
       setEditing(null);
+      Swal.fire({
+        icon: 'success',
+        title: '¡Guardado!',
+        text: `El producto ha sido ${editing ? 'actualizado' : 'creado'} correctamente.`,
+        confirmButtonColor: '#0d9488',
+        timer: 2000,
+        timerProgressBar: true
+      });
     } catch (err) {
-      alert(err.userMessage || err.message);
+      Swal.fire({
+        icon: 'error',
+        title: 'Oops...',
+        text: err.userMessage || err.message || 'Ocurrió un error al guardar.',
+        confirmButtonColor: '#0d9488'
+      });
     }
   };
 
   const handleDelete = async (product) => {
-    if (!window.confirm(`¿Eliminar producto ${product.name}?`)) return;
-    try {
-      await deleteProduct(product.id);
-    } catch (err) {
-      alert(err.userMessage || err.message);
-    }
+    Swal.fire({
+      title: '¿Estás seguro?',
+      text: `Vas a eliminar el producto "${product.name}". Esta acción no se puede revertir.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#e11d48', // rojo rose-600
+      cancelButtonColor: '#64748b', // gris slate-500
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await deleteProduct(product.id);
+          Swal.fire({
+            icon: 'success',
+            title: 'Eliminado',
+            text: 'El producto ha sido eliminado.',
+            confirmButtonColor: '#0d9488',
+            timer: 1500
+          });
+        } catch (err) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Restricción de ERP',
+            text: 'No se puede eliminar el producto porque tiene movimientos o ventas asociadas. Usa el botón "Desactivar" en su lugar.',
+            confirmButtonColor: '#0d9488'
+          });
+        }
+      }
+    });
   };
 
   const handleToggleActive = async (product) => {
-    try {
-      await updateProduct(product.id, { is_active: !product.is_active });
-    } catch (err) {
-      alert(err.userMessage || err.message);
-    }
+    const actionText = product.is_active ? 'Desactivar' : 'Activar';
+    Swal.fire({
+      title: `${actionText} producto`,
+      text: `¿Seguro que quieres ${actionText.toLowerCase()} "${product.name}"?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#0d9488',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: `Sí, ${actionText.toLowerCase()}`,
+      cancelButtonText: 'Cancelar'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await updateProduct(product.id, { is_active: !product.is_active });
+          Swal.fire({
+            icon: 'success',
+            title: 'Acción completada',
+            text: `El producto ha sido ${product.is_active ? 'desactivado' : 'activado'}.`,
+            confirmButtonColor: '#0d9488',
+            timer: 1500
+          });
+        } catch (err) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: err.userMessage || err.message,
+            confirmButtonColor: '#0d9488'
+          });
+        }
+      }
+    });
   };
 
   return (
