@@ -5,7 +5,7 @@ import Badge from '../components/ui/Badge';
 import { useInventoryStore } from '../stores/useInventoryStore';
 import { useCatalogStore } from '../stores/useCatalogStore';
 import StockEntryModal from '../components/inventory/StockEntryModal';
-import { formatCurrency } from '../utils/formatters';
+import { formatCurrency } from '../lib/formatters';
 
 const formatDecimal = (value) => {
   const n = Number(value);
