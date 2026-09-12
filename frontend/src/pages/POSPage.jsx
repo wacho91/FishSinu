@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
@@ -8,6 +9,7 @@ import { useCatalogStore } from '../stores/useCatalogStore';
 import { useSalesStore } from '../stores/useSalesStore';
 import { useSessionStore } from '../stores/useSessionStore';
 import useDebounce from '../hooks/useDebounce';
+import { formatCurrency, formatDecimal } from '../utils/formatters';
 
 export default function POSPage() {
   const navigate = useNavigate();
@@ -49,7 +51,12 @@ export default function POSPage() {
   const handleAdd = (product) => {
     const available = availableStock(product);
     if (available <= 0) {
-      alert('Stock insuficiente');
+      Swal.fire({
+        icon: 'warning',
+        title: 'Stock insuficiente',
+        text: `No hay más ${product.name} disponible en inventario.`,
+        confirmButtonColor: '#0d9488'
+      });
       return;
     }
     const defaultQty = product.sale_unit === 'UNIT' ? 1 : 1;
@@ -58,7 +65,12 @@ export default function POSPage() {
 
   const handleCheckout = async (payload) => {
     if (!currentProfile) {
-      alert('Selecciona un perfil/cajero en la barra superior antes de cobrar.');
+      Swal.fire({
+        icon: 'warning',
+        title: 'Cajero no seleccionado',
+        text: 'Selecciona un perfil/cajero en la barra superior antes de cobrar.',
+        confirmButtonColor: '#0d9488'
+      });
       return;
     }
     setSubmitting(true);
@@ -67,9 +79,22 @@ export default function POSPage() {
       const sale = await createSale(payloadWithCashier);
       clearCart();
       setCheckoutOpen(false);
+      Swal.fire({
+        icon: 'success',
+        title: '¡Venta Exitosa!',
+        text: 'La venta se ha registrado correctamente.',
+        confirmButtonColor: '#0d9488',
+        timer: 1500,
+        timerProgressBar: true
+      });
       navigate(`/sales/${sale.id}`);
     } catch (err) {
-      alert(err.userMessage || err.message);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error en la venta',
+        text: err.userMessage || err.message || 'Ocurrió un error al procesar la venta.',
+        confirmButtonColor: '#0d9488'
+      });
     } finally {
       setSubmitting(false);
     }
@@ -91,6 +116,7 @@ export default function POSPage() {
           {products.map((product) => {
             const available = availableStock(product);
             const disabled = available <= 0 || !product.is_active;
+            const unitLabel = product.sale_unit === 'KG' ? 'kg' : product.sale_unit;
             return (
               <Card
                 key={product.id}
@@ -101,14 +127,15 @@ export default function POSPage() {
                     <p className="font-semibold text-slate-800">{product.name}</p>
                     <p className="font-mono text-xs text-slate-400">{product.code}</p>
                   </div>
-                  <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500">
-                    {product.sale_unit}
-                  </span>
                 </div>
-                <p className="mt-2 text-sm text-slate-500">
-                  Precio: <span className="font-semibold text-slate-700">{Number(product.price).toFixed(2)}</span>
+                {/* Precio formateado a COP */}
+                <p className="mt-2 text-lg font-bold text-teal-700">
+                  {formatCurrency(product.price)}
                 </p>
-                <p className="text-xs text-slate-400">Stock disponible: {available.toFixed(4)}</p>
+                {/* Stock formateado limpio + kg */}
+                <p className="text-xs text-slate-500 mt-1">
+                  Stock: {formatDecimal(available)} {unitLabel}
+                </p>
                 <Button
                   className="mt-3 w-full"
                   variant={disabled ? 'outline' : 'primary'}
@@ -148,7 +175,7 @@ export default function POSPage() {
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{item.product.name}</p>
                     <p className="text-xs text-slate-400">
-                      {Number(item.unit_price).toFixed(2)} / {item.product.sale_unit}
+                      {formatCurrency(item.unit_price)} / {item.product.sale_unit}
                     </p>
                   </div>
                   <button
@@ -167,8 +194,8 @@ export default function POSPage() {
                     onChange={(e) => updateCartItem(item.product.id, e.target.value)}
                     className="w-24 rounded-md border border-slate-300 px-2 py-1 text-sm"
                   />
-                  <span className="ml-auto text-sm font-semibold">
-                    {(Number(item.quantity) * Number(item.unit_price)).toFixed(2)}
+                  <span className="ml-auto text-sm font-semibold text-slate-700">
+                    {formatCurrency(Number(item.quantity) * Number(item.unit_price))}
                   </span>
                 </div>
               </div>
@@ -178,7 +205,8 @@ export default function POSPage() {
           <div className="mt-4 border-t border-slate-100 pt-3">
             <div className="flex items-center justify-between">
               <span className="text-sm text-slate-500">Total</span>
-              <span className="text-xl font-bold text-slate-800">{total.toFixed(2)}</span>
+              {/* Total formateado a COP */}
+              <span className="text-xl font-bold text-slate-800">{formatCurrency(total)}</span>
             </div>
             <Button
               className="mt-4 w-full"
@@ -199,7 +227,7 @@ export default function POSPage() {
         cart={cart}
         customers={customers}
         creditAccounts={creditAccounts}
-        currency={'PEN'}
+        currency={'COP'} // Moneda cambiada a COP
         loading={submitting}
         onConfirm={handleCheckout}
       />
