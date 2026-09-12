@@ -5,13 +5,11 @@ import Badge from '../components/ui/Badge';
 import { useInventoryStore } from '../stores/useInventoryStore';
 import { useCatalogStore } from '../stores/useCatalogStore';
 import StockEntryModal from '../components/inventory/StockEntryModal';
-import { formatCurrency } from '../lib/formatters'; // Importamos el formato de pesos
+import { formatCurrency } from '../utils/formatters';
 
-// Función auxiliar para mostrar kilos limpios
 const formatDecimal = (value) => {
   const n = Number(value);
   if (isNaN(n)) return '0';
-  // Si es entero, lo muestra sin decimales. Si no, con 2 decimales.
   return n % 1 === 0 ? n.toFixed(0) : n.toFixed(2);
 };
 
@@ -20,6 +18,7 @@ export default function InventoryPage() {
   const { products, fetchProducts } = useCatalogStore();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
 
   useEffect(() => {
     fetchMovements().catch(() => {});
@@ -28,13 +27,16 @@ export default function InventoryPage() {
 
   const submit = async (payload) => {
     setLoading(true);
+    setSuccessMsg('');
     try {
       await createMovement(payload);
       await fetchProducts();
       await fetchMovements();
-      setOpen(false);
+      setSuccessMsg('✅ ¡Movimiento registrado con éxito!');
+      setOpen(false); // Se cierra solo si todo salió bien
+      setTimeout(() => setSuccessMsg(''), 3000);
     } catch (err) {
-      alert(err.userMessage || err.message);
+      alert('Error: ' + (err.userMessage || err.message));
     } finally {
       setLoading(false);
     }
@@ -62,6 +64,13 @@ export default function InventoryPage() {
         <Button onClick={() => setOpen(true)}>+ Nuevo movimiento</Button>
       </div>
 
+      {/* Mensaje de éxito flotante */}
+      {successMsg && (
+        <div className="bg-green-50 text-green-700 border border-green-200 p-3 rounded-lg text-sm font-medium">
+          {successMsg}
+        </div>
+      )}
+
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
@@ -79,7 +88,6 @@ export default function InventoryPage() {
             <tbody className="divide-y divide-slate-100">
               {movements.map((m) => (
                 <tr key={m.id}>
-                  {/* Fecha en formato Colombia */}
                   <td className="px-4 py-3 whitespace-nowrap">{new Date(m.created_at).toLocaleString('es-CO')}</td>
                   <td className="px-4 py-3">
                     <Badge color={typeColor(m.movement_type)}>{m.movement_type}</Badge>
@@ -88,14 +96,11 @@ export default function InventoryPage() {
                     <div className="font-medium">{productName(m.product_id)}</div>
                     {m.product && <div className="text-xs text-slate-400">{m.product.code}</div>}
                   </td>
-                  {/* Cantidad limpia (sin 4 decimales si es entero) */}
                   <td className="px-4 py-3 font-medium text-slate-700">
                     {Number(m.quantity) < 0 ? '-' : ''}
                     {formatDecimal(Math.abs(Number(m.quantity)))}
                   </td>
-                  {/* Costo en formato Pesos Colombianos */}
                   <td className="px-4 py-3 text-slate-600">{formatCurrency(m.unit_cost)}</td>
-                  {/* Stock limpio */}
                   <td className="px-4 py-3 font-medium text-slate-700">{formatDecimal(m.stock_after)}</td>
                   <td className="px-4 py-3 text-slate-500">{m.reason || '—'}</td>
                 </tr>
@@ -117,6 +122,7 @@ export default function InventoryPage() {
         onClose={() => setOpen(false)}
         products={products}
         onSubmit={submit}
+        loading={loading} // Le pasamos el estado de carga al modal
       />
     </div>
   );
