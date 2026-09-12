@@ -7,7 +7,7 @@ import Badge from '../components/ui/Badge';
 import { useInvoiceStore } from '../stores/useInvoiceStore';
 import { useSalesStore } from '../stores/useSalesStore';
 import { useSessionStore } from '../stores/useSessionStore';
-import { formatCurrency, formatDecimal } from '../utils/formatters';
+import { formatCurrency, formatDecimal } from '../lib/formatters';
 
 export default function InvoiceDetailPage() {
   const { invoiceId } = useParams();
