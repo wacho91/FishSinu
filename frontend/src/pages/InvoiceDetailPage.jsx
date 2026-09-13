@@ -133,10 +133,21 @@ export default function InvoiceDetailPage() {
             <h2 className="text-xl font-bold text-slate-800 uppercase">Factura</h2>
             <p className="font-mono text-slate-600 mt-1">{inv.invoice_number || `Borrador #${inv.id}`}</p>
             <p className="text-sm text-slate-500 mt-2">Fecha: {inv.issue_date || 'Pendiente'}</p>
-            <div className="mt-2">
+            <div className="mt-2 flex flex-col items-end gap-1">
               <Badge color={inv.status === 'EMITTED' ? 'green' : inv.status === 'DRAFT' ? 'amber' : 'red'}>
                 {inv.status}
               </Badge>
+              {/* === ETIQUETA DE CRÉDITO/CONTADO === */}
+              {currentSale?.payment_type === 'CREDIT' ? (
+                <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-bold uppercase">
+                  Venta a Crédito
+                </span>
+              ) : (
+                <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold uppercase">
+                  Contado
+                </span>
+              )}
+              {/* =================================== */}
             </div>
           </div>
         </div>
@@ -200,6 +211,14 @@ export default function InvoiceDetailPage() {
               <span>Total</span>
               <span className="text-teal-700">{formatCurrency(inv.total)}</span>
             </div>
+            {/* === FORMA DE PAGO EN LOS TOTALES === */}
+            <div className="flex justify-between text-sm text-slate-500 pt-2">
+              <span>Forma de pago:</span>
+              <span className="font-semibold">
+                {currentSale?.payment_type === 'CREDIT' ? 'Crédito (Pendiente)' : 'Contado (Pagado)'}
+              </span>
+            </div>
+            {/* =================================== */}
           </div>
         </div>
 
