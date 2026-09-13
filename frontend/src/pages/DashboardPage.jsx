@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ResponsiveContainer,
@@ -24,25 +24,36 @@ export default function DashboardPage() {
   const { products, customers, fetchProducts, fetchCustomers } = useCatalogStore();
   const { invoices, fetchInvoices } = useInvoiceStore();
   const company = useSessionStore((s) => s.company);
-  
-  // === CAMBIO AQUÍ: 'PEN' cambiado a 'COP' ===
   const currency = company?.currency || 'COP';
-  // ==========================================
+
+  // === NUEVO ESTADO PARA LOS SALDOS REALES DE CRÉDITO ===
+  const [creditAccounts, setCreditAccounts] = useState([]);
 
   useEffect(() => {
     fetchSales().catch(() => {});
     fetchProducts().catch(() => {});
     fetchCustomers().catch(() => {});
     fetchInvoices().catch(() => {});
+
+    // Cargar las cuentas de crédito para saber el saldo real
+    const token = localStorage.getItem('fishsinu_token');
+    fetch('http://localhost:8000/api/v1/credit-accounts', {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(res => res.ok ? res.json() : [])
+      .then(data => setCreditAccounts(data))
+      .catch(() => {});
   }, []);
 
   const completedSales = sales.filter((s) => s.status === 'COMPLETED');
 
   const stats = useMemo(() => {
     const totalAmount = completedSales.reduce((acc, s) => acc + Number(s.total), 0);
-    const totalCreditPending = completedSales
-      .filter((s) => s.payment_type === 'CREDIT')
-      .reduce((acc, s) => acc + Number(s.total), 0);
+    
+    // === FIX CONTABLE: Sumar los saldos reales de las cuentas, no las ventas ===
+    const totalCreditPending = creditAccounts.reduce((acc, account) => acc + Number(account.balance), 0);
+    // =================================================================================
+    
     const emittedInvoices = invoices.filter((i) => i.status === 'EMITTED').length;
 
     return {
@@ -53,7 +64,7 @@ export default function DashboardPage() {
       totalCreditPending,
       emittedInvoices,
     };
-  }, [completedSales, products, customers, invoices]);
+  }, [completedSales, products, customers, invoices, creditAccounts]);
 
   // Ventas de los últimos 30 días agrupadas por fecha
   const salesByDay = useMemo(() => {
