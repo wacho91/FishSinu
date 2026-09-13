@@ -4,7 +4,7 @@ import Swal from 'sweetalert2';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
-import { formatCurrency, formatDate } from '../lib/formatters'; // Ajusta a utils si es necesario
+import { formatCurrency, formatDate } from '../lib/formatters';
 
 export default function CreditAccountDetailPage() {
   const { accountId } = useParams();
@@ -16,19 +16,22 @@ export default function CreditAccountDetailPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Usamos fetch directo al backend
       const token = localStorage.getItem('fishsinu_token');
       const headers = { Authorization: `Bearer ${token}` };
 
-      // 1. Cargar Cuenta
-      const accRes = await fetch(`http://localhost:8000/api/v1/credit-accounts/${accountId}`, { headers });
-      if (!accRes.ok) throw new Error('No se encontró la cuenta');
-      const accData = await accRes.json();
+      // === MAGIA: Obtenemos todas las cuentas y filtramos la que necesitamos ===
+      const accRes = await fetch(`http://localhost:8000/api/v1/credit-accounts`, { headers });
+      if (!accRes.ok) throw new Error('No se pudieron cargar las cuentas');
+      const accList = await accRes.json();
+      const accData = accList.find(acc => acc.id === Number(accountId));
+      
+      if (!accData) throw new Error('No se encontró la cuenta');
       setAccount(accData);
+      // =======================================================================
 
       // 2. Cargar Pagos/Abonos
       const payRes = await fetch(`http://localhost:8000/api/v1/payments?credit_account_id=${accountId}`, { headers });
-      const payData = await payRes.ok ? await payRes.json() : [];
+      const payData = payRes.ok ? await payRes.json() : [];
       setPayments(payData);
 
       // 3. Cargar Cliente (si existe)
@@ -41,7 +44,7 @@ export default function CreditAccountDetailPage() {
       }
     } catch (err) {
       console.error("Error cargando cuenta:", err);
-      Swal.fire('Error', 'No se pudo cargar la información de la cuenta.', 'error');
+      Swal.fire('Error', err.message || 'No se pudo cargar la información.', 'error');
     } finally {
       setLoading(false);
     }
