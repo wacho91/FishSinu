@@ -4,10 +4,7 @@ import Swal from 'sweetalert2';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
-import { formatCurrency, formatDate } from '../lib/formatters'; // Ajusta la ruta si es lib/formatters
-
-// Importamos los servicios de API directamente (ajusta la ruta según tu estructura)
-import { creditAccountApi, paymentApi } from '../services/api'; 
+import { formatCurrency, formatDate } from '../lib/formatters'; // Ajusta a utils si es necesario
 
 export default function CreditAccountDetailPage() {
   const { accountId } = useParams();
@@ -19,19 +16,32 @@ export default function CreditAccountDetailPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Cargar cuenta, pagos y cliente
-      const accRes = await creditAccountApi.get(accountId);
-      setAccount(accRes.data);
-      
-      const payRes = await paymentApi.list({ credit_account_id: accountId });
-      setPayments(payRes.data || []);
+      // Usamos fetch directo al backend
+      const token = localStorage.getItem('fishsinu_token');
+      const headers = { Authorization: `Bearer ${token}` };
 
-      if (accRes.data?.customer_id) {
-        const custRes = await customerApi.get(accRes.data.customer_id);
-        setCustomer(custRes.data);
+      // 1. Cargar Cuenta
+      const accRes = await fetch(`http://localhost:8000/api/v1/credit-accounts/${accountId}`, { headers });
+      if (!accRes.ok) throw new Error('No se encontró la cuenta');
+      const accData = await accRes.json();
+      setAccount(accData);
+
+      // 2. Cargar Pagos/Abonos
+      const payRes = await fetch(`http://localhost:8000/api/v1/payments?credit_account_id=${accountId}`, { headers });
+      const payData = await payRes.ok ? await payRes.json() : [];
+      setPayments(payData);
+
+      // 3. Cargar Cliente (si existe)
+      if (accData.customer_id) {
+        const custRes = await fetch(`http://localhost:8000/api/v1/customers/${accData.customer_id}`, { headers });
+        if (custRes.ok) {
+          const custData = await custRes.json();
+          setCustomer(custData);
+        }
       }
     } catch (err) {
       console.error("Error cargando cuenta:", err);
+      Swal.fire('Error', 'No se pudo cargar la información de la cuenta.', 'error');
     } finally {
       setLoading(false);
     }
@@ -61,12 +71,25 @@ export default function CreditAccountDetailPage() {
 
     if (amount) {
       try {
-        await paymentApi.create({
-          credit_account_id: accountId,
-          amount: String(amount),
-          payment_type: 'CASH', // Por defecto en efectivo
-          payment_date: new Date().toISOString().slice(0, 10)
+        const token = localStorage.getItem('fishsinu_token');
+        const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
+        
+        const res = await fetch(`http://localhost:8000/api/v1/payments`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            credit_account_id: accountId,
+            amount: String(amount),
+            payment_type: 'CASH',
+            payment_date: new Date().toISOString().slice(0, 10)
+          })
         });
+
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.detail || 'Error al guardar');
+        }
+
         Swal.fire({
           icon: 'success',
           title: '¡Abono registrado!',
@@ -79,7 +102,7 @@ export default function CreditAccountDetailPage() {
         Swal.fire({
           icon: 'error',
           title: 'Error',
-          text: err.userMessage || err.message || 'No se pudo registrar el abono.',
+          text: err.message || 'No se pudo registrar el abono.',
           confirmButtonColor: '#0d9488'
         });
       }
