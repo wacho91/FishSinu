@@ -26,8 +26,10 @@ export default function DashboardPage() {
   const company = useSessionStore((s) => s.company);
   const currency = company?.currency || 'COP';
 
-  // === NUEVO ESTADO PARA LOS SALDOS REALES DE CRÉDITO ===
+  // === ESTADOS PARA CRÉDITOS Y ABONOS ===
   const [creditAccounts, setCreditAccounts] = useState([]);
+  const [payments, setPayments] = useState([]);
+  const [customersMap, setCustomersMap] = useState({});
 
   useEffect(() => {
     fetchSales().catch(() => {});
@@ -35,36 +37,56 @@ export default function DashboardPage() {
     fetchCustomers().catch(() => {});
     fetchInvoices().catch(() => {});
 
-    // Cargar las cuentas de crédito para saber el saldo real
     const token = localStorage.getItem('fishsinu_token');
-    fetch('http://localhost:8000/api/v1/credit-accounts', {
-      headers: { Authorization: `Bearer ${token}` }
-    })
+    const headers = { Authorization: `Bearer ${token}` };
+
+    // Cargar cuentas de crédito
+    fetch('http://localhost:8000/api/v1/credit-accounts', { headers })
       .then(res => res.ok ? res.json() : [])
       .then(data => setCreditAccounts(data))
+      .catch(() => {});
+
+    // Cargar Abonos
+    fetch('http://localhost:8000/api/v1/payments', { headers })
+      .then(res => res.ok ? res.json() : [])
+      .then(data => setPayments(data))
+      .catch(() => {});
+
+    // Mapear clientes para saber los nombres
+    fetch('http://localhost:8000/api/v1/customers', { headers })
+      .then(res => res.ok ? res.json() : [])
+      .then(data => {
+        const map = {};
+        data.forEach(c => map[c.id] = c.name);
+        setCustomersMap(map);
+      })
       .catch(() => {});
   }, []);
 
   const completedSales = sales.filter((s) => s.status === 'COMPLETED');
 
   const stats = useMemo(() => {
-    const totalAmount = completedSales.reduce((acc, s) => acc + Number(s.total), 0);
+    // === FIX CONTABLE: Ingresos Reales = Contado + Abonos de Crédito ===
+    const cashSales = completedSales
+      .filter(s => s.payment_type !== 'CREDIT')
+      .reduce((acc, s) => acc + Number(s.total), 0);
     
-    // === FIX CONTABLE: Sumar los saldos reales de las cuentas, no las ventas ===
+    const totalPayments = payments.reduce((acc, p) => acc + Number(p.amount), 0);
+    const realIncome = cashSales + totalPayments;
+    // ==================================================================
+
     const totalCreditPending = creditAccounts.reduce((acc, account) => acc + Number(account.balance), 0);
-    // =================================================================================
-    
     const emittedInvoices = invoices.filter((i) => i.status === 'EMITTED').length;
 
     return {
       totalSales: completedSales.length,
-      totalAmount,
+      realIncome, // Cambiamos totalAmount por realIncome
       totalProducts: products.filter((p) => p.is_active).length,
       totalCustomers: customers.filter((c) => c.is_active).length,
       totalCreditPending,
       emittedInvoices,
     };
-  }, [completedSales, products, customers, invoices, creditAccounts]);
+  }, [completedSales, products, customers, invoices, creditAccounts, payments]);
 
   // Ventas de los últimos 30 días agrupadas por fecha
   const salesByDay = useMemo(() => {
@@ -101,14 +123,9 @@ export default function DashboardPage() {
       <div className="flex flex-wrap items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Dashboard</h2>
-          <p className="text-sm text-slate-500">
-            Resumen operativo y financiero del negocio.
-          </p>
+          <p className="text-sm text-slate-500">Resumen operativo y financiero del negocio.</p>
         </div>
-        <Link
-          to="/pos"
-          className="rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700"
-        >
+        <Link to="/pos" className="rounded-md bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700">
           🛒 Ir al POS
         </Link>
       </div>
@@ -120,9 +137,9 @@ export default function DashboardPage() {
           <p className="mt-1 text-2xl font-bold text-slate-800">{stats.totalSales}</p>
         </Card>
         <Card className="p-4">
-          <p className="text-xs text-slate-500">Ingresos totales</p>
+          <p className="text-xs text-slate-500">Ingresos en Caja (Reales)</p>
           <p className="mt-1 text-xl font-bold text-sky-700">
-            <CurrencyText value={stats.totalAmount} currency={currency} />
+            <CurrencyText value={stats.realIncome} currency={currency} />
           </p>
         </Card>
         <Card className="p-4">
@@ -144,9 +161,7 @@ export default function DashboardPage() {
       {/* Gráficas */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card className="p-4">
-          <h3 className="mb-3 font-semibold text-slate-700">
-            Ingresos últimos 30 días
-          </h3>
+          <h3 className="mb-3 font-semibold text-slate-700">Ingresos últimos 30 días</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={salesByDay}>
@@ -160,13 +175,7 @@ export default function DashboardPage() {
                 <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip />
-                <Area
-                  type="monotone"
-                  dataKey="total"
-                  stroke="#0284c7"
-                  fill="url(#colorTotal)"
-                  name="Ingresos"
-                />
+                <Area type="monotone" dataKey="total" stroke="#0284c7" fill="url(#colorTotal)" name="Ingresos" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -188,52 +197,74 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Últimas ventas */}
-      <Card className="overflow-hidden">
-        <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-          <h3 className="font-semibold text-slate-700">Ventas recientes</h3>
-          <Link to="/sales" className="text-sm text-sky-600 hover:underline">
-            Ver todas
-          </Link>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-              <tr>
-                <th className="px-4 py-3">Fecha</th>
-                <th className="px-4 py-3">Cliente</th>
-                <th className="px-4 py-3">Pago</th>
-                <th className="px-4 py-3">Total</th>
-                <th className="px-4 py-3">Estado</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {sales.slice(0, 8).map((sale) => (
-                <tr key={sale.id}>
-                  <td className="px-4 py-3">{sale.sale_date}</td>
-                  <td className="px-4 py-3">Cliente #{sale.customer_id || '—'}</td>
-                  <td className="px-4 py-3">{sale.payment_type}</td>
-                  <td className="px-4 py-3 font-medium">
-                    <CurrencyText value={sale.total} currency={currency} />
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge color={sale.status === 'COMPLETED' ? 'green' : 'red'}>
-                      {sale.status}
-                    </Badge>
-                  </td>
-                </tr>
-              ))}
-              {sales.length === 0 && (
+      {/* === NUEVO: Muro de Actividades Recientes === */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card className="overflow-hidden">
+          <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+            <h3 className="font-semibold text-slate-700">Abonos Recientes</h3>
+          </div>
+          <div className="p-4 space-y-3 max-h-64 overflow-y-auto">
+            {payments.length > 0 ? (
+              payments.map((p) => (
+                <div key={p.id} className="flex items-center gap-3 p-2 rounded-lg bg-green-50 border border-green-100">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white font-bold">
+                    $                   </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-slate-800">
+                      Abono de {customersMap[p.credit_account_id] || `Cuenta #${p.credit_account_id}`}
+                    </p>
+                    <p className="text-xs text-slate-500">Fecha: {p.payment_date}</p>
+                  </div>
+                  <div className="font-bold text-green-600">
+                    + <CurrencyText value={p.amount} currency={currency} />
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-center text-slate-400 py-6">No hay abonos registrados aún.</p>
+            )}
+          </div>
+        </Card>
+
+        {/* Últimas ventas */}
+        <Card className="overflow-hidden">
+          <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+            <h3 className="font-semibold text-slate-700">Ventas recientes</h3>
+            <Link to="/sales" className="text-sm text-sky-600 hover:underline">Ver todas</Link>
+          </div>
+          <div className="overflow-x-auto max-h-64 overflow-y-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-slate-50 text-xs uppercase text-slate-500 sticky top-0">
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-slate-400">
-                    Aún no hay ventas. Realiza la primera desde el POS.
-                  </td>
+                  <th className="px-4 py-3">Fecha</th>
+                  <th className="px-4 py-3">Cliente</th>
+                  <th className="px-4 py-3">Pago</th>
+                  <th className="px-4 py-3">Total</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {sales.slice(0, 5).map((sale) => (
+                  <tr key={sale.id}>
+                    <td className="px-4 py-3">{sale.sale_date}</td>
+                    <td className="px-4 py-3">Cliente #{sale.customer_id || '—'}</td>
+                    <td className="px-4 py-3">{sale.payment_type}</td>
+                    <td className="px-4 py-3 font-medium">
+                      <CurrencyText value={sale.total} currency={currency} />
+                    </td>
+                  </tr>
+                ))}
+                {sales.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="px-4 py-8 text-center text-slate-400">
+                      Aún no hay ventas.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      </div>
     </div>
   );
 }
