@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
@@ -8,6 +9,8 @@ import { useSalesStore } from '../stores/useSalesStore';
 import { useSessionStore } from '../stores/useSessionStore';
 import { useInvoiceStore } from '../stores/useInvoiceStore';
 import { useCatalogStore } from '../stores/useCatalogStore';
+// Ajusta la ruta a formatters según tu estructura (utils o lib)
+import { formatCurrency, formatDecimal } from '../lib/formatters';
 
 export default function SalesDetailPage() {
   const { saleId } = useParams();
@@ -35,9 +38,21 @@ export default function SalesDetailPage() {
     try {
       await createInvoice({ sale_id: sale.id });
       await fetchInvoices();
-      alert('Factura creada correctamente');
+      Swal.fire({
+        icon: 'success',
+        title: '¡Factura Creada!',
+        text: 'La factura se ha generado en estado borrador.',
+        confirmButtonColor: '#0d9488',
+        timer: 2000,
+        timerProgressBar: true
+      });
     } catch (err) {
-      alert(err.userMessage || err.message);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: err.userMessage || err.message,
+        confirmButtonColor: '#0d9488'
+      });
     }
   };
 
@@ -47,9 +62,21 @@ export default function SalesDetailPage() {
     try {
       await emitInvoice(invoice.id);
       await fetchInvoices();
-      alert('Factura emitida correctamente');
+      Swal.fire({
+        icon: 'success',
+        title: '¡Factura Emitida!',
+        text: 'La factura es válida para la DIAN.',
+        confirmButtonColor: '#0d9488',
+        timer: 2000,
+        timerProgressBar: true
+      });
     } catch (err) {
-      alert(err.userMessage || err.message);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: err.userMessage || err.message,
+        confirmButtonColor: '#0d9488'
+      });
     } finally {
       setLoadingInvoice(false);
     }
@@ -97,33 +124,37 @@ export default function SalesDetailPage() {
 
       <Card className="overflow-hidden">
         <div className="px-4 py-3 font-semibold text-slate-700">Items de la venta</div>
-        <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-            <tr>
-              <th className="px-4 py-3">Producto</th>
-              <th className="px-4 py-3">Cantidad</th>
-              <th className="px-4 py-3">Unidad</th>
-              <th className="px-4 py-3">Precio unit.</th>
-              <th className="px-4 py-3">Costo unit.</th>
-              <th className="px-4 py-3">Total línea</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {(sale.items || []).map((item) => (
-              <tr key={item.id}>
-                <td className="px-4 py-3">
-                  <div className="font-medium">{item.product?.name || item.description}</div>
-                  <div className="text-xs text-slate-400">{item.product?.code}</div>
-                </td>
-                <td className="px-4 py-3">{Number(item.quantity).toFixed(4)}</td>
-                <td className="px-4 py-3">{item.unit}</td>
-                <td className="px-4 py-3">{Number(item.unit_price).toFixed(2)}</td>
-                <td className="px-4 py-3">{Number(item.unit_cost).toFixed(2)}</td>
-                <td className="px-4 py-3 font-medium">{Number(item.line_total).toFixed(2)}</td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+              <tr>
+                <th className="px-4 py-3">Producto</th>
+                <th className="px-4 py-3">Cantidad</th>
+                <th className="px-4 py-3">Unidad</th>
+                <th className="px-4 py-3">Precio unit.</th>
+                <th className="px-4 py-3">Costo unit.</th>
+                <th className="px-4 py-3">Total línea</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {(sale.items || []).map((item) => (
+                <tr key={item.id}>
+                  <td className="px-4 py-3">
+                    <div className="font-medium">{item.product?.name || item.description}</div>
+                    <div className="text-xs text-slate-400">{item.product?.code}</div>
+                  </td>
+                  {/* Kilos limpios (ej: 10 en vez de 10.0000) */}
+                  <td className="px-4 py-3">{formatDecimal(item.quantity)}</td>
+                  <td className="px-4 py-3">{item.unit}</td>
+                  {/* Precios en COP $ */}
+                  <td className="px-4 py-3">{formatCurrency(item.unit_price)}</td>
+                  <td className="px-4 py-3 text-slate-400">{formatCurrency(item.unit_cost)}</td>
+                  <td className="px-4 py-3 font-medium">{formatCurrency(item.line_total)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </Card>
 
       {/* Facturación */}
