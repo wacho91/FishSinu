@@ -205,21 +205,29 @@ export default function DashboardPage() {
           </div>
           <div className="p-4 space-y-3 max-h-64 overflow-y-auto">
             {payments.length > 0 ? (
-              payments.map((p) => (
-                <div key={p.id} className="flex items-center gap-3 p-2 rounded-lg bg-green-50 border border-green-100">
-                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white font-bold">
-                    $                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-slate-800">
-                      Abono de {customersMap[p.credit_account_id] || `Cuenta #${p.credit_account_id}`}
-                    </p>
-                    <p className="text-xs text-slate-500">Fecha: {p.payment_date}</p>
+              payments.map((p) => {
+                // === FIX LÓGICO: Buscamos el cliente real ===
+                const account = creditAccounts.find(acc => acc.id === p.credit_account_id);
+                const customerId = account?.customer_id;
+                const customerName = customersMap[customerId] || `Cliente #${customerId || p.credit_account_id}`;
+                // =================================================
+                
+                return (
+                  <div key={p.id} className="flex items-center gap-3 p-2 rounded-lg bg-green-50 border border-green-100">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white font-bold">
+                      $                     </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-slate-800">
+                        Abono de {customerName}
+                      </p>
+                      <p className="text-xs text-slate-500">Fecha: {p.payment_date}</p>
+                    </div>
+                    <div className="font-bold text-green-600">
+                      + <CurrencyText value={p.amount} currency={currency} />
+                    </div>
                   </div>
-                  <div className="font-bold text-green-600">
-                    + <CurrencyText value={p.amount} currency={currency} />
-                  </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <p className="text-center text-slate-400 py-6">No hay abonos registrados aún.</p>
             )}
