@@ -9,7 +9,7 @@ import { useSalesStore } from '../stores/useSalesStore';
 import { useSessionStore } from '../stores/useSessionStore';
 import { useInvoiceStore } from '../stores/useInvoiceStore';
 import { useCatalogStore } from '../stores/useCatalogStore';
-// Ajusta la ruta a formatters según tu estructura (utils o lib)
+// Ajusta la ruta de formatters si está en utils:
 import { formatCurrency, formatDecimal } from '../lib/formatters';
 
 export default function SalesDetailPage() {
@@ -47,12 +47,23 @@ export default function SalesDetailPage() {
         timerProgressBar: true
       });
     } catch (err) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: err.userMessage || err.message,
-        confirmButtonColor: '#0d9488'
-      });
+      // Si el backend dice que ya existe (Error 409)
+      if (err.response && err.response.status === 409) {
+        await fetchInvoices(); // Actualizamos la lista para que el botón cambie a "Ver Factura"
+        Swal.fire({
+          icon: 'info',
+          title: 'Factura ya existe',
+          text: 'Esta venta ya tiene una factura asociada. Puedes verla o emitirla abajo.',
+          confirmButtonColor: '#0d9488'
+        });
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: err.userMessage || err.message,
+          confirmButtonColor: '#0d9488'
+        });
+      }
     }
   };
 
@@ -143,10 +154,8 @@ export default function SalesDetailPage() {
                     <div className="font-medium">{item.product?.name || item.description}</div>
                     <div className="text-xs text-slate-400">{item.product?.code}</div>
                   </td>
-                  {/* Kilos limpios (ej: 10 en vez de 10.0000) */}
                   <td className="px-4 py-3">{formatDecimal(item.quantity)}</td>
                   <td className="px-4 py-3">{item.unit}</td>
-                  {/* Precios en COP $ */}
                   <td className="px-4 py-3">{formatCurrency(item.unit_price)}</td>
                   <td className="px-4 py-3 text-slate-400">{formatCurrency(item.unit_cost)}</td>
                   <td className="px-4 py-3 font-medium">{formatCurrency(item.line_total)}</td>
