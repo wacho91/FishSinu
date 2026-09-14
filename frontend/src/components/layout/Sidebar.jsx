@@ -10,6 +10,9 @@ const links = [
   { to: '/customers', label: 'Clientes', icon: '👥' },
   { to: '/credit-accounts', label: 'Créditos', icon: '💳' },
   { to: '/invoices', label: 'Facturas', icon: '📄' },
+  // === NUEVO BOTÓN DE CIERRE DE CAJA ===
+  { to: '/z-report', label: 'Cierre de Caja', icon: '🧮' },
+  // ======================================
   { to: '/settings', label: 'Configuración', icon: '⚙️' },
 ];
 

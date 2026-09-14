@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import ZReportPage from './pages/ZReportPage';
 import ProtectedRoute from './components/routes/ProtectedRoute';
 import AppLayout from './components/layout/AppLayout';
 import LoginPage from './pages/LoginPage';
@@ -44,6 +45,7 @@ export default function App() {
           <Route path="credit-accounts/:accountId" element={<CreditAccountDetailPage />} />
           <Route path="invoices" element={<InvoicesPage />} />
           <Route path="invoices/:invoiceId" element={<InvoiceDetailPage />} />
+          <Route path="z-report" element={<ZReportPage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>
       </Routes>
