@@ -137,14 +137,14 @@ export default function InvoiceDetailPage() {
               <Badge color={inv.status === 'EMITTED' ? 'green' : inv.status === 'DRAFT' ? 'amber' : 'red'}>
                 {inv.status}
               </Badge>
-              {/* === ETIQUETA DE CRÉDITO/CONTADO === */}
+              {/* === ETIQUETA DE PAGO MEJORADA === */}
               {currentSale?.payment_type === 'CREDIT' ? (
                 <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-bold uppercase">
                   Venta a Crédito
                 </span>
               ) : (
                 <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold uppercase">
-                  Contado
+                  {currentSale?.payment_type === 'TRANSFER' ? 'Transferencia' : currentSale?.payment_type === 'CARD' ? 'Tarjeta' : 'Efectivo'}
                 </span>
               )}
               {/* =================================== */}
@@ -211,11 +211,13 @@ export default function InvoiceDetailPage() {
               <span>Total</span>
               <span className="text-teal-700">{formatCurrency(inv.total)}</span>
             </div>
-            {/* === FORMA DE PAGO EN LOS TOTALES === */}
+            {/* === FORMA DE PAGO ESPECÍFICA === */}
             <div className="flex justify-between text-sm text-slate-500 pt-2">
               <span>Forma de pago:</span>
               <span className="font-semibold">
-                {currentSale?.payment_type === 'CREDIT' ? 'Crédito (Pendiente)' : 'Contado (Pagado)'}
+                {currentSale?.payment_type === 'CREDIT' ? 'Crédito (Pendiente)' : 
+                 currentSale?.payment_type === 'TRANSFER' ? 'Transferencia (Pagado)' :
+                 currentSale?.payment_type === 'CARD' ? 'Tarjeta (Pagado)' : 'Efectivo (Pagado)'}
               </span>
             </div>
             {/* =================================== */}
