@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
+import Swal from 'sweetalert2';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Badge from '../components/ui/Badge';
 import CustomerFormModal from '../components/customers/CustomerFormModal';
+import Pagination from '../components/ui/Pagination'; // <-- Importamos la paginación
 import { useCatalogStore } from '../stores/useCatalogStore';
+import { formatCurrency } from '../lib/formatters'; // <-- Importamos el formato COP
 
 export default function CustomersPage() {
   const {
@@ -22,6 +25,11 @@ export default function CustomersPage() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(null);
 
+  // === ESTADOS DE PAGINACIÓN ===
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+  // ==============================
+
   useEffect(() => {
     fetchCustomers().catch(() => {});
     fetchCreditAccounts().catch(() => {});
@@ -35,6 +43,18 @@ export default function CustomersPage() {
     );
   }, [customers, search]);
 
+  // Resetear página a 1 cuando se busca
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
+
+  // === LÓGICA DE PAGINACIÓN ===
+  const indexOfLast = currentPage * itemsPerPage;
+  const indexOfFirst = indexOfLast - itemsPerPage;
+  const currentCustomers = filtered.slice(indexOfFirst, indexOfLast);
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  // ==============================
+
   const getCreditAccount = (customerId) =>
     creditAccounts.find((ca) => ca.customer_id === customerId);
 
@@ -44,18 +64,55 @@ export default function CustomersPage() {
       else await createCustomer(payload);
       setOpen(false);
       setEditing(null);
+      Swal.fire({
+        icon: 'success',
+        title: '¡Guardado!',
+        text: `Cliente ${editing ? 'actualizado' : 'creado'} correctamente.`,
+        confirmButtonColor: '#0d9488',
+        timer: 2000,
+        timerProgressBar: true
+      });
     } catch (err) {
-      alert(err.userMessage || err.message);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: err.userMessage || err.message || 'Ocurrió un error al guardar.',
+        confirmButtonColor: '#0d9488'
+      });
     }
   };
 
   const handleDelete = async (customer) => {
-    if (!window.confirm(`¿Eliminar cliente ${customer.name}?`)) return;
-    try {
-      await deleteCustomer(customer.id);
-    } catch (err) {
-      alert(err.userMessage || err.message);
-    }
+    Swal.fire({
+      title: '¿Estás seguro?',
+      text: `Vas a eliminar al cliente "${customer.name}".`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#e11d48',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await deleteCustomer(customer.id);
+          Swal.fire({
+            icon: 'success',
+            title: 'Eliminado',
+            text: 'El cliente ha sido eliminado.',
+            confirmButtonColor: '#0d9488',
+            timer: 1500
+          });
+        } catch (err) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Restricción de ERP',
+            text: 'No se puede eliminar el cliente porque tiene ventas o créditos asociados.',
+            confirmButtonColor: '#0d9488'
+          });
+        }
+      }
+    });
   };
 
   return (
@@ -96,10 +153,11 @@ export default function CustomersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filtered.map((c) => {
+              {/* Usamos currentCustomers en vez de filtered */}
+              {currentCustomers.map((c) => {
                 const credit = getCreditAccount(c.id);
                 return (
-                  <tr key={c.id}>
+                  <tr key={c.id} className="hover:bg-slate-50">
                     <td className="px-4 py-3 font-medium">{c.name}</td>
                     <td className="px-4 py-3">
                       <span className="text-slate-400">{c.document_type}</span>{' '}
@@ -119,8 +177,9 @@ export default function CustomersPage() {
                       {credit ? (
                         <div>
                           <span className="text-xs text-slate-400">Saldo: </span>
-                          <span className="font-medium">{Number(credit.balance).toFixed(2)}</span>
-                          <span className="text-xs text-slate-400"> / {Number(credit.credit_limit).toFixed(2)}</span>
+                          {/* Formato COP aplicado aquí */}
+                          <span className="font-medium">{formatCurrency(credit.balance)}</span>
+                          <span className="text-xs text-slate-400"> / {formatCurrency(credit.credit_limit)}</span>
                         </div>
                       ) : (
                         <Badge color="slate">Sin crédito</Badge>
@@ -145,7 +204,7 @@ export default function CustomersPage() {
                   </tr>
                 );
               })}
-              {filtered.length === 0 && (
+              {currentCustomers.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
                     No hay clientes registrados.
@@ -154,6 +213,11 @@ export default function CustomersPage() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Componente de Paginación */}
+        <div className="p-4 border-t border-slate-100">
+          <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         </div>
       </Card>
 
