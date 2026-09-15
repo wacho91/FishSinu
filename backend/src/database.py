@@ -9,20 +9,19 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.orm import declarative_base
 
-# === LINK DE SUPABASE PEGADO DIRECTO ===
-# ¡OJO! Cambia TU_CONTRASEÑA_REAL por la contraseña de tu proyecto FishSinu
-DATABASE_URL = "postgresql+asyncpg://postgres.xsfdufxevnddztvkqwxc:WInwX49kLPCrYS1y@aws-0-sa-east-1.pooler.supabase.com:6543/postgres"
-# =======================================
+# === LECTURA SEGURA: Cero contraseñas en el código ===
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-# Línea de debug para ver qué URL está usando
-print(f"DEBUG DATABASE: Conectando a -> {DATABASE_URL}")
+# Si no encuentra el .env, el programa se detiene y avisa, pero no expone nada.
+if not DATABASE_URL:
+    raise ValueError("FATAL: La variable de entorno DATABASE_URL no está configurada en el archivo .env")
 
-# Creamos el motor asíncrono
+# Creamos el motor
 engine = create_async_engine(
     DATABASE_URL,
-    echo=False, # Esto apaga los warnings de SQL en la consola
+    echo=False,
     pool_pre_ping=True,
-    connect_args={"statement_cache_size": 0} # Magia para PgBouncer de Supabase
+    connect_args={"statement_cache_size": 0}
 )
 
 AsyncSessionLocal = async_sessionmaker(
@@ -35,4 +34,5 @@ Base = declarative_base()
 
 async def get_db():
     async with AsyncSessionLocal() as db:
+        yield db
         yield db
