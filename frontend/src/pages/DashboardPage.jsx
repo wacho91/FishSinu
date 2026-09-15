@@ -14,6 +14,7 @@ import {
 import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
 import CurrencyText from '../components/ui/CurrencyText';
+import Pagination from '../components/ui/Pagination'; // <-- Importamos la paginación
 import { useSalesStore } from '../stores/useSalesStore';
 import { useCatalogStore } from '../stores/useCatalogStore';
 import { useInvoiceStore } from '../stores/useInvoiceStore';
@@ -30,6 +31,12 @@ export default function DashboardPage() {
   const [creditAccounts, setCreditAccounts] = useState([]);
   const [payments, setPayments] = useState([]);
   const [customersMap, setCustomersMap] = useState({});
+
+  // === ESTADOS DE PAGINACIÓN DEL DASHBOARD ===
+  const [payPage, setPayPage] = useState(1);
+  const [salePage, setSalePage] = useState(1);
+  const itemsPerPage = 3; // Solo 3 elementos por tarjeta para evitar scroll infinito
+  // ==========================================
 
   useEffect(() => {
     fetchSales().catch(() => {});
@@ -80,7 +87,7 @@ export default function DashboardPage() {
 
     return {
       totalSales: completedSales.length,
-      realIncome, // Cambiamos totalAmount por realIncome
+      realIncome, 
       totalProducts: products.filter((p) => p.is_active).length,
       totalCustomers: customers.filter((c) => c.is_active).length,
       totalCreditPending,
@@ -117,6 +124,14 @@ export default function DashboardPage() {
     });
     return Object.values(map).sort((a, b) => (a.month < b.month ? -1 : 1));
   }, [completedSales]);
+
+  // === LÓGICA DE PAGINACIÓN PARA TARJETAS ===
+  const paginatedPayments = payments.slice((payPage - 1) * itemsPerPage, payPage * itemsPerPage);
+  const totalPayPages = Math.ceil(payments.length / itemsPerPage);
+
+  const paginatedSales = completedSales.slice((salePage - 1) * itemsPerPage, salePage * itemsPerPage);
+  const totalSalePages = Math.ceil(completedSales.length / itemsPerPage);
+  // ==========================================
 
   return (
     <div className="space-y-4">
@@ -197,20 +212,20 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* === NUEVO: Muro de Actividades Recientes === */}
+      {/* === Muro de Actividades Recientes === */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card className="overflow-hidden">
+        
+        {/* Abonos Recientes */}
+        <Card className="overflow-hidden flex flex-col">
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
             <h3 className="font-semibold text-slate-700">Abonos Recientes</h3>
           </div>
-          <div className="p-4 space-y-3 max-h-64 overflow-y-auto">
-            {payments.length > 0 ? (
-              payments.map((p) => {
-                // === FIX LÓGICO: Buscamos el cliente real ===
+          <div className="p-4 space-y-3 flex-grow">
+            {paginatedPayments.length > 0 ? (
+              paginatedPayments.map((p) => {
                 const account = creditAccounts.find(acc => acc.id === p.credit_account_id);
                 const customerId = account?.customer_id;
                 const customerName = customersMap[customerId] || `Cliente #${customerId || p.credit_account_id}`;
-                // =================================================
                 
                 return (
                   <div key={p.id} className="flex items-center gap-3 p-2 rounded-lg bg-green-50 border border-green-100">
@@ -232,17 +247,21 @@ export default function DashboardPage() {
               <p className="text-center text-slate-400 py-6">No hay abonos registrados aún.</p>
             )}
           </div>
+          {/* Paginación Abonos */}
+          <div className="p-3 border-t border-slate-100">
+            <Pagination currentPage={payPage} totalPages={totalPayPages} onPageChange={setPayPage} />
+          </div>
         </Card>
 
-        {/* Últimas ventas */}
-        <Card className="overflow-hidden">
+        {/* Ventas recientes */}
+        <Card className="overflow-hidden flex flex-col">
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
             <h3 className="font-semibold text-slate-700">Ventas recientes</h3>
             <Link to="/sales" className="text-sm text-sky-600 hover:underline">Ver todas</Link>
           </div>
-          <div className="overflow-x-auto max-h-64 overflow-y-auto">
+          <div className="overflow-x-auto flex-grow">
             <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 text-xs uppercase text-slate-500 sticky top-0">
+              <thead className="bg-slate-50 text-xs uppercase text-slate-500">
                 <tr>
                   <th className="px-4 py-3">Fecha</th>
                   <th className="px-4 py-3">Cliente</th>
@@ -251,7 +270,7 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {sales.slice(0, 5).map((sale) => (
+                {paginatedSales.map((sale) => (
                   <tr key={sale.id}>
                     <td className="px-4 py-3">{sale.sale_date}</td>
                     <td className="px-4 py-3">Cliente #{sale.customer_id || '—'}</td>
@@ -261,7 +280,7 @@ export default function DashboardPage() {
                     </td>
                   </tr>
                 ))}
-                {sales.length === 0 && (
+                {completedSales.length === 0 && (
                   <tr>
                     <td colSpan={4} className="px-4 py-8 text-center text-slate-400">
                       Aún no hay ventas.
@@ -270,6 +289,10 @@ export default function DashboardPage() {
                 )}
               </tbody>
             </table>
+          </div>
+          {/* Paginación Ventas */}
+          <div className="p-3 border-t border-slate-100">
+            <Pagination currentPage={salePage} totalPages={totalSalePages} onPageChange={setSalePage} />
           </div>
         </Card>
       </div>
