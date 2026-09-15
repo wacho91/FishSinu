@@ -4,6 +4,7 @@ import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
 import CurrencyText from '../components/ui/CurrencyText';
+import Pagination from '../components/ui/Pagination'; // <-- Importamos la paginación
 import { useSalesStore } from '../stores/useSalesStore';
 import { useSessionStore } from '../stores/useSessionStore';
 
@@ -13,6 +14,11 @@ export default function SalesPage() {
   const [status, setStatus] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+
+  // === ESTADOS DE PAGINACIÓN ===
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+  // ==============================
 
   useEffect(() => {
     fetchSales().catch(() => {});
@@ -24,6 +30,18 @@ export default function SalesPage() {
       return true;
     });
   }, [sales, status, startDate, endDate]);
+
+  // Resetear página cuando cambian los filtros
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [status, startDate, endDate]);
+
+  // === LÓGICA DE PAGINACIÓN ===
+  const indexOfLast = currentPage * itemsPerPage;
+  const indexOfFirst = indexOfLast - itemsPerPage;
+  const currentSales = filtered.slice(indexOfFirst, indexOfLast);
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  // ==============================
 
   const applyFilters = () => {
     const params = {};
@@ -91,7 +109,8 @@ export default function SalesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filtered.map((sale) => (
+              {/* Usamos currentSales en vez de filtered */}
+              {currentSales.map((sale) => (
                 <tr key={sale.id}>
                   <td className="px-4 py-3 font-mono">#{sale.id}</td>
                   <td className="px-4 py-3">{sale.sale_date}</td>
@@ -123,6 +142,11 @@ export default function SalesPage() {
               )}
             </tbody>
           </table>
+        </div>
+        
+        {/* Componente de Paginación */}
+        <div className="p-4 border-t border-slate-100">
+          <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         </div>
       </Card>
     </div>
