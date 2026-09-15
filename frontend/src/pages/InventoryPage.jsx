@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
+import Swal from 'sweetalert2'; // <-- Importamos SweetAlert2
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
+import Pagination from '../components/ui/Pagination'; // <-- Importamos la paginación
 import { useInventoryStore } from '../stores/useInventoryStore';
 import { useCatalogStore } from '../stores/useCatalogStore';
 import StockEntryModal from '../components/inventory/StockEntryModal';
@@ -20,10 +22,22 @@ export default function InventoryPage() {
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
 
+  // === ESTADOS DE PAGINACIÓN ===
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+  // ==============================
+
   useEffect(() => {
     fetchMovements().catch(() => {});
     fetchProducts().catch(() => {});
   }, []);
+
+  // === LÓGICA DE PAGINACIÓN ===
+  const indexOfLast = currentPage * itemsPerPage;
+  const indexOfFirst = indexOfLast - itemsPerPage;
+  const currentMovements = movements.slice(indexOfFirst, indexOfLast);
+  const totalPages = Math.ceil(movements.length / itemsPerPage);
+  // ==============================
 
   const submit = async (payload) => {
     setLoading(true);
@@ -33,10 +47,16 @@ export default function InventoryPage() {
       await fetchProducts();
       await fetchMovements();
       setSuccessMsg('✅ ¡Movimiento registrado con éxito!');
-      setOpen(false); // Se cierra solo si todo salió bien
+      setOpen(false);
       setTimeout(() => setSuccessMsg(''), 3000);
     } catch (err) {
-      alert('Error: ' + (err.userMessage || err.message));
+      // Reemplazamos el alert feo por SweetAlert2
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: err.userMessage || err.message || 'Ocurrió un error al registrar el movimiento.',
+        confirmButtonColor: '#0d9488'
+      });
     } finally {
       setLoading(false);
     }
@@ -86,7 +106,8 @@ export default function InventoryPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {movements.map((m) => (
+              {/* Usamos currentMovements en vez de movements */}
+              {currentMovements.map((m) => (
                 <tr key={m.id}>
                   <td className="px-4 py-3 whitespace-nowrap">{new Date(m.created_at).toLocaleString('es-CO')}</td>
                   <td className="px-4 py-3">
@@ -115,6 +136,11 @@ export default function InventoryPage() {
             </tbody>
           </table>
         </div>
+
+        {/* Componente de Paginación */}
+        <div className="p-4 border-t border-slate-100">
+          <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+        </div>
       </Card>
 
       <StockEntryModal
@@ -122,7 +148,7 @@ export default function InventoryPage() {
         onClose={() => setOpen(false)}
         products={products}
         onSubmit={submit}
-        loading={loading} // Le pasamos el estado de carga al modal
+        loading={loading}
       />
     </div>
   );
