@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
+import Swal from 'sweetalert2';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Modal from '../components/ui/Modal';
 import Badge from '../components/ui/Badge';
+import Pagination from '../components/ui/Pagination'; // <-- Importamos la paginación
 import useCatalogStore from '../stores/useCatalogStore';
 
 export default function CategoriesPage() {
@@ -14,9 +16,21 @@ export default function CategoriesPage() {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
 
+  // === ESTADOS DE PAGINACIÓN ===
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+  // ==============================
+
   useEffect(() => {
     fetchCategories().catch(() => {});
   }, []);
+
+  // === LÓGICA DE PAGINACIÓN ===
+  const indexOfLast = currentPage * itemsPerPage;
+  const indexOfFirst = indexOfLast - itemsPerPage;
+  const currentCategories = categories.slice(indexOfFirst, indexOfLast);
+  const totalPages = Math.ceil(categories.length / itemsPerPage);
+  // ==============================
 
   const openNew = () => {
     setEditing(null);
@@ -44,18 +58,55 @@ export default function CategoriesPage() {
         await createCategory({ name, description: description || null });
       }
       setOpen(false);
+      Swal.fire({
+        icon: 'success',
+        title: '¡Guardado!',
+        text: `Categoría ${editing ? 'actualizada' : 'creada'} correctamente.`,
+        confirmButtonColor: '#0d9488',
+        timer: 2000,
+        timerProgressBar: true
+      });
     } catch (err) {
-      alert(err.userMessage || err.message);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: err.userMessage || err.message || 'Ocurrió un error al guardar.',
+        confirmButtonColor: '#0d9488'
+      });
     }
   };
 
   const handleDelete = async (cat) => {
-    if (!window.confirm(`¿Eliminar categoría ${cat.name}?`)) return;
-    try {
-      await deleteCategory(cat.id);
-    } catch (err) {
-      alert(err.userMessage || err.message);
-    }
+    Swal.fire({
+      title: '¿Estás seguro?',
+      text: `Vas a eliminar la categoría "${cat.name}".`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#e11d48',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await deleteCategory(cat.id);
+          Swal.fire({
+            icon: 'success',
+            title: 'Eliminada',
+            text: 'La categoría ha sido eliminada.',
+            confirmButtonColor: '#0d9488',
+            timer: 1500
+          });
+        } catch (err) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Restricción de ERP',
+            text: 'No se puede eliminar la categoría porque tiene productos asociados.',
+            confirmButtonColor: '#0d9488'
+          });
+        }
+      }
+    });
   };
 
   return (
@@ -79,8 +130,9 @@ export default function CategoriesPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {categories.map((c) => (
-              <tr key={c.id}>
+            {/* Usamos currentCategories en vez de categories */}
+            {currentCategories.map((c) => (
+              <tr key={c.id} className="hover:bg-slate-50">
                 <td className="px-4 py-3 font-medium">{c.name}</td>
                 <td className="px-4 py-3 text-slate-500">{c.description || '—'}</td>
                 <td className="px-4 py-3">
@@ -100,8 +152,20 @@ export default function CategoriesPage() {
                 </td>
               </tr>
             ))}
+            {currentCategories.length === 0 && (
+              <tr>
+                <td colSpan={4} className="px-4 py-8 text-center text-slate-400">
+                  No hay categorías registradas.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
+
+        {/* Componente de Paginación */}
+        <div className="p-4 border-t border-slate-100">
+          <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+        </div>
       </Card>
 
       <Modal
