@@ -6,6 +6,7 @@ import Input from '../components/ui/Input';
 import Badge from '../components/ui/Badge';
 import CurrencyText from '../components/ui/CurrencyText';
 import ProductFormModal from '../components/products/ProductFormModal';
+import Pagination from '../components/ui/Pagination'; // <-- Importamos la paginación
 import { useCatalogStore } from '../stores/useCatalogStore';
 
 export default function ProductsPage() {
@@ -25,6 +26,11 @@ export default function ProductsPage() {
   const [editing, setEditing] = useState(null);
   const [search, setSearch] = useState('');
 
+  // === ESTADOS DE PAGINACIÓN ===
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+  // ==============================
+
   useEffect(() => {
     fetchCategories().catch(() => {});
     fetchProducts().catch(() => {});
@@ -38,6 +44,18 @@ export default function ProductsPage() {
         p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q)
     );
   }, [products, search]);
+
+  // Resetear página a 1 cuando se busca
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
+
+  // === LÓGICA DE PAGINACIÓN ===
+  const indexOfLast = currentPage * itemsPerPage;
+  const indexOfFirst = indexOfLast - itemsPerPage;
+  const currentProducts = filtered.slice(indexOfFirst, indexOfLast);
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  // ==============================
 
   const categoryName = (id) => categories.find((c) => c.id === id)?.name || '—';
 
@@ -177,7 +195,8 @@ export default function ProductsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filtered.map((p) => (
+              {/* Usamos currentProducts en vez de filtered */}
+              {currentProducts.map((p) => (
                 <tr key={p.id} className="hover:bg-slate-50">
                   <td className="px-4 py-3 font-mono text-xs">{p.code}</td>
                   <td className="px-4 py-3 font-medium">{p.name}</td>
@@ -219,7 +238,7 @@ export default function ProductsPage() {
                   </td>
                 </tr>
               ))}
-              {filtered.length === 0 && (
+              {currentProducts.length === 0 && (
                 <tr>
                   <td colSpan={8} className="px-4 py-8 text-center text-slate-400">
                     No hay productos registrados.
@@ -228,6 +247,11 @@ export default function ProductsPage() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Componente de Paginación */}
+        <div className="p-4 border-t border-slate-100">
+          <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         </div>
       </Card>
 
