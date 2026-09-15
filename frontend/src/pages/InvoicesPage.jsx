@@ -1,15 +1,29 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
+import Pagination from '../components/ui/Pagination'; // <-- Importamos la paginación
 import { useInvoiceStore } from '../stores/useInvoiceStore';
+import { formatCurrency } from '../lib/formatters'; // <-- Importamos el formato COP
 
 export default function InvoicesPage() {
   const { invoices, loading, error, fetchInvoices } = useInvoiceStore();
 
+  // === ESTADOS DE PAGINACIÓN ===
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+  // ==============================
+
   useEffect(() => {
     fetchInvoices().catch(() => {});
   }, []);
+
+  // === LÓGICA DE PAGINACIÓN ===
+  const indexOfLast = currentPage * itemsPerPage;
+  const indexOfFirst = indexOfLast - itemsPerPage;
+  const currentInvoices = invoices.slice(indexOfFirst, indexOfLast);
+  const totalPages = Math.ceil(invoices.length / itemsPerPage);
+  // ==============================
 
   return (
     <div className="space-y-4">
@@ -36,7 +50,8 @@ export default function InvoicesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {invoices.map((inv) => (
+              {/* Usamos currentInvoices en vez de invoices */}
+              {currentInvoices.map((inv) => (
                 <tr key={inv.id}>
                   <td className="px-4 py-3 font-mono text-xs">#{inv.id}</td>
                   <td className="px-4 py-3 font-medium">{inv.invoice_number || '—'}</td>
@@ -47,7 +62,8 @@ export default function InvoicesPage() {
                   </td>
                   <td className="px-4 py-3">{inv.customer_name}</td>
                   <td className="px-4 py-3">{inv.issue_date || 'No emitida'}</td>
-                  <td className="px-4 py-3 font-medium">{Number(inv.total).toFixed(2)}</td>
+                  {/* Formato COP aplicado aquí */}
+                  <td className="px-4 py-3 font-medium">{formatCurrency(inv.total)}</td>
                   <td className="px-4 py-3">
                     <Badge
                       color={
@@ -79,6 +95,11 @@ export default function InvoicesPage() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Componente de Paginación */}
+        <div className="p-4 border-t border-slate-100">
+          <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         </div>
       </Card>
     </div>
