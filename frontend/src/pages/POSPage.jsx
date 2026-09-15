@@ -4,6 +4,7 @@ import Swal from 'sweetalert2';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
+import Pagination from '../components/ui/Pagination'; // <-- Importamos la paginación
 import CheckoutModal from '../components/sales/CheckoutModal';
 import { useCatalogStore } from '../stores/useCatalogStore';
 import { useSalesStore } from '../stores/useSalesStore';
@@ -22,6 +23,11 @@ export default function POSPage() {
   const [submitting, setSubmitting] = useState(false);
   const debouncedSearch = useDebounce(search, 300);
 
+  // === ESTADOS DE PAGINACIÓN ===
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8; // 8 productos por página
+  // ==============================
+
   useEffect(() => {
     fetchProducts().catch(() => {});
     fetchCustomers().catch(() => {});
@@ -34,7 +40,15 @@ export default function POSPage() {
     } else {
       fetchProducts().catch(() => {});
     }
+    setCurrentPage(1); // Resetear a la página 1 al buscar
   }, [debouncedSearch]);
+
+  // === LÓGICA DE PAGINACIÓN ===
+  const indexOfLast = currentPage * itemsPerPage;
+  const indexOfFirst = indexOfLast - itemsPerPage;
+  const currentProducts = products.slice(indexOfFirst, indexOfLast);
+  const totalPages = Math.ceil(products.length / itemsPerPage);
+  // ==============================
 
   const total = cart.reduce(
     (sum, item) => sum + Number(item.quantity) * Number(item.unit_price),
@@ -113,7 +127,8 @@ export default function POSPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {products.map((product) => {
+          {/* Usamos currentProducts en vez de products */}
+          {currentProducts.map((product) => {
             const available = availableStock(product);
             const disabled = available <= 0 || !product.is_active;
             const unitLabel = product.sale_unit === 'KG' ? 'kg' : product.sale_unit;
@@ -128,11 +143,9 @@ export default function POSPage() {
                     <p className="font-mono text-xs text-slate-400">{product.code}</p>
                   </div>
                 </div>
-                {/* Precio formateado a COP */}
                 <p className="mt-2 text-lg font-bold text-teal-700">
                   {formatCurrency(product.price)}
                 </p>
-                {/* Stock formateado limpio + kg */}
                 <p className="text-xs text-slate-500 mt-1">
                   Stock: {formatDecimal(available)} {unitLabel}
                 </p>
@@ -153,6 +166,17 @@ export default function POSPage() {
             </div>
           )}
         </div>
+
+        {/* Componente de Paginación para el POS */}
+        {products.length > 0 && (
+          <div className="mt-6">
+            <Pagination 
+              currentPage={currentPage} 
+              totalPages={totalPages} 
+              onPageChange={setCurrentPage} 
+            />
+          </div>
+        )}
       </div>
 
       {/* Carrito */}
@@ -205,7 +229,6 @@ export default function POSPage() {
           <div className="mt-4 border-t border-slate-100 pt-3">
             <div className="flex items-center justify-between">
               <span className="text-sm text-slate-500">Total</span>
-              {/* Total formateado a COP */}
               <span className="text-xl font-bold text-slate-800">{formatCurrency(total)}</span>
             </div>
             <Button
@@ -227,7 +250,7 @@ export default function POSPage() {
         cart={cart}
         customers={customers}
         creditAccounts={creditAccounts}
-        currency={'COP'} // Moneda cambiada a COP
+        currency={'COP'}
         loading={submitting}
         onConfirm={handleCheckout}
       />
