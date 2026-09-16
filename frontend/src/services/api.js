@@ -8,9 +8,7 @@ import axios from 'axios';
  */
 
 const API_BASE_URL = (
-  import.meta.env.VITE_API_URL || 'https://fishsinu.onrender.com
-/api/v1'
-).replace(/\/$/, '');
+  import.meta.env.VITE_API_URL || 'https://fishsinu.onrender.com/api/v1').replace(/\/$/, '');
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
