@@ -19,10 +19,11 @@ const links = [
 export default function Sidebar() {
   return (
     <aside className="hidden w-60 flex-shrink-0 flex-col border-r border-slate-200 bg-white md:flex">
-      <div className="flex h-16 items-center gap-3 border-b border-slate-100 px-5">
-        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-sky-600 text-lg text-white">
-          🐟
-        </span>
+            <div className="flex h-16 items-center gap-3 border-b border-slate-100 px-5">
+        {/* === NUEVO LOGO FS === */}
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-teal-600 to-cyan-500 text-white font-extrabold text-sm shadow-md">
+          FS
+        </div>
         <div>
           <p className="text-base font-bold leading-tight text-slate-800">FishSinu</p>
           <p className="text-[11px] text-slate-400">ERP Marítimo</p>
