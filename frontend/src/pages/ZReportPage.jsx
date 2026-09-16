@@ -3,7 +3,7 @@ import Swal from 'sweetalert2';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
-import { formatCurrency, formatDecimal, formatDate } from '../lib/formatters'; // Ajusta a utils si es necesario
+import { formatCurrency, formatDecimal, formatDate } from '../lib/formatters';
 
 export default function ZReportPage() {
   const [sales, setSales] = useState([]);
@@ -14,8 +14,7 @@ export default function ZReportPage() {
     const headers = { Authorization: `Bearer ${token}` };
 
     // 1. Obtenemos todas las ventas completadas
-    fetch('https://fishsinu.onrender.com
-/api/v1/sales', { headers })
+    fetch('https://fishsinu.onrender.com/api/v1/sales', { headers })
       .then(res => res.ok ? res.json() : [])
       .then(async (data) => {
         const today = new Date().toISOString().slice(0, 10);
@@ -24,8 +23,7 @@ export default function ZReportPage() {
         // 2. Obtenemos el detalle de cada venta (para saber los items)
         const detailedSales = await Promise.all(
           todaySalesSummary.map(s => 
-            fetch(`https://fishsinu.onrender.com
-/api/v1/sales/${s.id}`, { headers })
+            fetch(`https://fishsinu.onrender.com/api/v1/sales/${s.id}`, { headers })
               .then(res => res.ok ? res.json() : null)
           )
         );
