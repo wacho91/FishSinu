@@ -20,7 +20,8 @@ export default function CreditAccountDetailPage() {
       const headers = { Authorization: `Bearer ${token}` };
 
       // === MAGIA: Obtenemos todas las cuentas y filtramos la que necesitamos ===
-      const accRes = await fetch(`http://localhost:8000/api/v1/credit-accounts`, { headers });
+      const accRes = await fetch(`https://fishsinu.onrender.com
+/api/v1/credit-accounts`, { headers });
       if (!accRes.ok) throw new Error('No se pudieron cargar las cuentas');
       const accList = await accRes.json();
       const accData = accList.find(acc => acc.id === Number(accountId));
@@ -30,13 +31,15 @@ export default function CreditAccountDetailPage() {
       // =======================================================================
 
       // 2. Cargar Pagos/Abonos
-      const payRes = await fetch(`http://localhost:8000/api/v1/payments?credit_account_id=${accountId}`, { headers });
+      const payRes = await fetch(`https://fishsinu.onrender.com
+/api/v1/payments?credit_account_id=${accountId}`, { headers });
       const payData = payRes.ok ? await payRes.json() : [];
       setPayments(payData);
 
       // 3. Cargar Cliente (si existe)
       if (accData.customer_id) {
-        const custRes = await fetch(`http://localhost:8000/api/v1/customers/${accData.customer_id}`, { headers });
+        const custRes = await fetch(`https://fishsinu.onrender.com
+/api/v1/customers/${accData.customer_id}`, { headers });
         if (custRes.ok) {
           const custData = await custRes.json();
           setCustomer(custData);
@@ -77,7 +80,8 @@ export default function CreditAccountDetailPage() {
         const token = localStorage.getItem('fishsinu_token');
         const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
         
-        const res = await fetch(`http://localhost:8000/api/v1/payments`, {
+        const res = await fetch(`https://fishsinu.onrender.com
+/api/v1/payments`, {
           method: 'POST',
           headers,
           body: JSON.stringify({

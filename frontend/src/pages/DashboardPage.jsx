@@ -48,19 +48,22 @@ export default function DashboardPage() {
     const headers = { Authorization: `Bearer ${token}` };
 
     // Cargar cuentas de crédito
-    fetch('http://localhost:8000/api/v1/credit-accounts', { headers })
+    fetch('https://fishsinu.onrender.com
+/api/v1/credit-accounts', { headers })
       .then(res => res.ok ? res.json() : [])
       .then(data => setCreditAccounts(data))
       .catch(() => {});
 
     // Cargar Abonos
-    fetch('http://localhost:8000/api/v1/payments', { headers })
+    fetch('https://fishsinu.onrender.com
+/api/v1/payments', { headers })
       .then(res => res.ok ? res.json() : [])
       .then(data => setPayments(data))
       .catch(() => {});
 
     // Mapear clientes para saber los nombres
-    fetch('http://localhost:8000/api/v1/customers', { headers })
+    fetch('https://fishsinu.onrender.com
+/api/v1/customers', { headers })
       .then(res => res.ok ? res.json() : [])
       .then(data => {
         const map = {};
